@@ -6,13 +6,10 @@ import Item from "../models/Item.js";
 
 const router = express.Router();
 
-// All order routes require login
+// Admin protected routes
 router.use(authenticate);
 
-/**
- * GET /orders/past
- * Show past orders for logged-in user
- */
+// GET /orders/past - list user's past orders
 router.get("/past", async (req, res) => {
   try {
     const orders = await Order.findAll({
@@ -25,7 +22,7 @@ router.get("/past", async (req, res) => {
               attributes: ["id", "name", "category", "price", "imageUrl"]
             }]
         }],
-      order: [["created", "DESC"]],
+      order: [["created", "DESC"]], // most recent first
     });
     const formatted = orders.map(order => ({
       id: order.id,
@@ -44,16 +41,12 @@ router.get("/past", async (req, res) => {
 
     res.json(formatted);
   } catch (err) {
-    console.error("Fetch past orders failed:", err);
     res.status(500).json({ error: "Failed to fetch past orders" });
   }
 });
 
 
-/**
- * POST /orders/new
- * body: { items: [{ itemId, quantity }] }
- */
+// POST /orders/new - create a new order
 router.post("/new", async (req, res) => {
   const { items } = req.body;
   if (!items || !Array.isArray(items) || !items.length) {
@@ -70,21 +63,21 @@ router.post("/new", async (req, res) => {
     total += item.price * i.quantity;
   }
 
-  // Create order
+  // Create order and order items
   const order = await Order.create({ userId: req.user.id, totalPrice: total});
 
+  // Deduct stock and create order items
   for (const i of items) {
     const item = await Item.findByPk(i.itemId);
     await OrderItem.create({
       orderId: order.id,
       itemId: item.id,
       quantity: i.quantity,
-      unitPrice: item.price, // record price at time of order
+      unitPrice: item.price, 
     });
     item.quantity -= i.quantity;
     await item.save();
   }
-
   res.json({ message: "Order created", orderId: order.id });
 });
 

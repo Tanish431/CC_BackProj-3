@@ -5,6 +5,7 @@ import User from "./models/User.js";
 import bcrypt from "bcrypt";
 dotenv.config();
 
+// Serialize user into the session
 passport.use(
   new GoogleStrategy(
     {
@@ -14,14 +15,11 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
-        // Google profile info
         const email = profile.emails[0].value;
         const username = profile.displayName;
 
-        // Check if user exists
         let user = await User.findOne({ where: { username: email } });
         if (!user) {
-          // create a new user with random password
           const hash = await bcrypt.hash("google-oauth-placeholder", 10);
           user = await User.create({ username: email, passwordHash: hash, role: "user" });
         }

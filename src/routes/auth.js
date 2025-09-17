@@ -8,6 +8,7 @@ import User from "../models/User.js";
 dotenv.config();
 const router = express.Router();
 
+// User signup
 router.post("/user/signup", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: "Missing fields" });
@@ -19,6 +20,7 @@ router.post("/user/signup", async (req, res) => {
   res.json({ token });
 });
 
+// User login
 router.post("/user/login", async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ where: { username } });
@@ -29,7 +31,7 @@ router.post("/user/login", async (req, res) => {
   res.json({ token });
 });
 
-// Google OAuth start
+// Google OAuth start - login with Google
 router.get("/google", (req, res, next) => {
   passport.authenticate("google", { scope: ["email", "profile"] })(req, res, next);
 });
@@ -49,6 +51,7 @@ router.get(
   }
 );
 
+// Admin login
 router.post("/admin/login", async (req, res) => {
   const { username, password } = req.body;
   const user = await User.findOne({ where: { username, role: "admin" } });

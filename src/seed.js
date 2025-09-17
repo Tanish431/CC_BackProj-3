@@ -6,6 +6,7 @@ dotenv.config();
 
 async function seed() {
   await sequelize.sync({ force: true });
+  // Create an admin user
   const hash = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
   await User.create({
     username: process.env.ADMIN_USERNAME,

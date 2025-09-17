@@ -9,6 +9,7 @@ import sequelize from "../db.js";
 const router = express.Router();
 router.use(authenticate);
 
+//Adding items to cart
 router.post("/add", async (req, res) => {
   const { itemId, quantity } = req.body;
   if (!itemId || !quantity) return res.status(400).json({ error: "Missing fields" });
@@ -31,13 +32,11 @@ router.post("/add", async (req, res) => {
   res.json(cartItem);
 });
 
-/**
- * GET /cart/info
- */
+// Get cart info
 router.get("/info", async (req, res) => {
   const cartItems = await CartItem.findAll({
     where: { userId: req.user.id },
-    include: [Item],
+    include: [Item], // Include item details
   });
 
   const total = cartItems.reduce((sum, ci) => sum + ci.Item.price* ci.quantity, 0);
@@ -45,22 +44,16 @@ router.get("/info", async (req, res) => {
   res.json({ items: cartItems, total });
 });
 
-/**
- * POST /cart/remove
- * body: { itemId }
- */
+// Remove item from cart
 router.post("/remove", async (req, res) => {
   const { itemId } = req.body;
   const cartItem = await CartItem.findOne({ where: { userId: req.user.id, itemId } });
   if (!cartItem) return res.status(404).json({ error: "Not in cart" });
-  await cartItem.destroy();
+  await cartItem.destroy(); 
   res.json({ message: "Removed from cart" });
 });
 
-/**
- * POST /cart/checkout
- * body: { address, phone }
- */
+// Checkout
 router.post("/checkout", async (req, res) => {
   const cartItems = await CartItem.findAll({ where: { userId: req.user.id }, include: [Item] });
   if (!cartItems.length) return res.status(400).json({ error: "Cart is empty" });
@@ -100,7 +93,7 @@ router.post("/checkout", async (req, res) => {
     await t.commit();
     res.json({ message: "Order placed", orderId: order.id });
   } catch (err) {
-    await t.rollback();
+    await t.rollback(); // Rollback on error
     res.status(400).json({ error: err.message });
   }
 });

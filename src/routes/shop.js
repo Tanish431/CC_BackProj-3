@@ -10,23 +10,26 @@ router.get("/list", async (req, res) => {
 
   try {
     const where = {};
+    // Apply filters
     if (category) where.category = category;
     if (minPrice && maxPrice) where.price = { [Op.between]: [minPrice, maxPrice] };
     else if (minPrice) where.price = { [Op.gte]: minPrice };
     else if (maxPrice) where.price = { [Op.lte]: maxPrice };
 
     let items = await Item.findAll({ where });
-
+    // Fuzzy search
     if (search) {
+      // First search by name
       const results = fuzzysort.go(search, items, { key: ["name"] });
       if (results.total === 0) {
+        // Second search by description
         const results = fuzzysort.go(search, items, { key: ["description"] });
         items = results.map(r => r.obj);
       }else{
         items = results.map(r => r.obj);
       } 
     }
-
+    // Pagination
     const total = items.length;
     const start = (page - 1) * limit;
     const end = start + parseInt(limit);

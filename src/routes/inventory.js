@@ -16,9 +16,10 @@ const upload = multer({ dest: "uploads/" });
 
 const router = express.Router();
 
-// Protect all routes: only admin
+// Admin protected routes
 router.use(authenticate, requireRole("admin"));
 
+// POST /inventory/upload - upload CSV file
 router.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
@@ -27,7 +28,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     const filePath = path.resolve(req.file.path);
     const results = [];
     fs.createReadStream(filePath)
-      .pipe(csv())
+      .pipe(csv()) // CSV headers match Item model fields
       .on("data", (row) => {
         results.push(row);
       })
@@ -60,7 +61,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 });
 
 
-// GET /inventory/list
+// GET /inventory/list - list all items
 router.get("/list", async (req, res) => {
   const items = await Item.findAll({
     attributes: ["id", "name", "description", "quantity", "category", "price", "imageUrl", "created", "restocked"],
@@ -68,14 +69,14 @@ router.get("/list", async (req, res) => {
   res.json(items);
 });
 
-// POST /inventory/new
+// POST /inventory/new - add new item
 router.post("/new", async (req, res) => {
   const { name, description, category, quantity, price } = req.body;
   const item = await Item.create({ name, description, category, quantity, price });
   res.json(item);
 });
 
-// PUT /inventory/update/:id
+// PUT /inventory/update/:id - update item
 router.put("/update/:id", async (req, res) => {
   const item = await Item.findByPk(req.params.id);
   if (!item) return res.status(404).json({ error: "Item not found" });
@@ -83,7 +84,7 @@ router.put("/update/:id", async (req, res) => {
   res.json(item);
 });
 
-// POST /inventory/restock/:id
+// POST /inventory/restock/:id - restock item
 router.post("/restock/:id", async (req, res) => {
   const { quantity } = req.body; // new stock
   const item = await Item.findByPk(req.params.id);
@@ -93,10 +94,7 @@ router.post("/restock/:id", async (req, res) => {
   res.json(item);
 });
 
-/**
- * GET /inventory/low-stock
- * Returns items where quantity <= 2
- */
+// GET /inventory/low-stock - check for low stock items
 router.get("/low-stock", async (req, res) => {
   try {
     const items = await Item.findAll({ where: { quantity: { [Op.lte]: 2 } } });
@@ -111,22 +109,16 @@ router.get("/low-stock", async (req, res) => {
 });
 
 
-// GET /inventory/orders
+// GET /inventory/orders - list orders with filters 
 router.get("/orders", async (req, res) => {
-  const { 
-    itemName, 
-    category, 
-    minTotal, 
-    maxTotal, 
-    user, 
-    page = 1, 
-    limit = 10 
-  } = req.query;
+  const { itemName, category, minTotal, maxTotal, user, page = 1, limit = 10 } = req.query;
 
+  // Build dynamic where clauses
   const whereOrder = {};
   const whereItem = {};
   const whereUser = {};
 
+  // Filters
   if (minTotal && maxTotal) whereOrder.totalPrice = { [Op.between]: [minTotal, maxTotal] };
   else if (minTotal) whereOrder.totalPrice = { [Op.gte]: minTotal };
   else if (maxTotal) whereOrder.totalPrice = { [Op.lte]: maxTotal };
@@ -163,7 +155,7 @@ router.get("/orders", async (req, res) => {
 });
 
 
-// GET /inventory/revenue
+// GET /inventory/revenue - calculate total revenue
 router.get("/revenue", async (req, res) => {
   const orders = await Order.findAll({ include: [{ model: OrderItem }] });
   let revenue = 0;
