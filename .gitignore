@@ -1,0 +1,16 @@
+.env
+ppackages/*
+node_modules
+dist
+.DS_Store
+.vscode
+.idea
+*.log
+*.tsbuildinfo
+coverage
+*.local
+*.swp
+*.swo
+*.bak
+*.tmp
+*.sqlite
