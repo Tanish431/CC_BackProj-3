@@ -77,6 +77,8 @@ node src/seed.js
 
 ## API Endpoints (overview)
 
+To view the endpoint documentation visit [Postman API Documentation](https://tanish-sde-542764.postman.co/workspace/Tanish-Soni's-Workspace~6a9195ae-945f-48d7-8167-a19cd39022da/collection/48428849-7950c1e6-80b6-4336-af2d-5dfa99a8603a?action=share&creator=48428849&active-environment=48428849-5670d21a-b702-4110-bed8-9627df3e85a4)
+
 ### Auth
 - `POST /auth/user/signup` — create user `{ username, password }`
 - `POST /auth/user/login` — login user, returns JWT
@@ -142,3 +144,4 @@ curl -X POST http://localhost:3000/auth/admin/login \
   -H "Content-Type: application/json" \
   -d '{"username":"username/email","password":"password"}'
 ```
+
